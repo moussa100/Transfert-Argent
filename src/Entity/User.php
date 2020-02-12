@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -46,6 +48,27 @@ class User implements AdvancedUserInterface
      * @ORM\JoinColumn(nullable=false)
      */
     private $profil;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Depot", mappedBy="user")
+     */
+    private $depot;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\Partenaire", cascade={"persist", "remove"})
+     */
+    private $partenaire;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Compte", mappedBy="user")
+     */
+    private $compte;
+
+    public function __construct()
+    {
+        $this->depot = new ArrayCollection();
+        $this->compte = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -156,5 +179,79 @@ class User implements AdvancedUserInterface
      }
      public function isEnabled(){
          return $this->isActive;
+     }
+
+     /**
+      * @return Collection|Depot[]
+      */
+     public function getDepot(): Collection
+     {
+         return $this->depot;
+     }
+
+     public function addDepot(Depot $depot): self
+     {
+         if (!$this->depot->contains($depot)) {
+             $this->depot[] = $depot;
+             $depot->setUser($this);
+         }
+
+         return $this;
+     }
+
+     public function removeDepot(Depot $depot): self
+     {
+         if ($this->depot->contains($depot)) {
+             $this->depot->removeElement($depot);
+             // set the owning side to null (unless already changed)
+             if ($depot->getUser() === $this) {
+                 $depot->setUser(null);
+             }
+         }
+
+         return $this;
+     }
+
+     public function getPartenaire(): ?Partenaire
+     {
+         return $this->partenaire;
+     }
+
+     public function setPartenaire(?Partenaire $partenaire): self
+     {
+         $this->partenaire = $partenaire;
+
+         return $this;
+     }
+
+     /**
+      * @return Collection|Compte[]
+      */
+     public function getCompte(): Collection
+     {
+         return $this->compte;
+     }
+
+     public function addCompte(Compte $compte): self
+     {
+         if (!$this->compte->contains($compte)) {
+             $this->compte[] = $compte;
+             $compte->setUser($this);
+         }
+
+         return $this;
+     }
+
+     public function removeCompte(Compte $compte): self
+     {
+         if ($this->compte->contains($compte)) {
+             $this->compte->removeElement($compte);
+             // set the owning side to null (unless already changed)
+             if ($compte->getUser() === $this) {
+                 $compte->setUser(null);
+             }
+         }
+
+         return $this;
      }
 }
