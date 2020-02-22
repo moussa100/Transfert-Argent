@@ -10,7 +10,11 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\AdvancedUserInterface;
 
 /**
- * @ApiResource()
+ * @ApiResource(
+ * collectionOperations={
+ * "post"={"access_control"="is_granted('POST', object)"}
+ * },
+ * )
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  */
 class User implements AdvancedUserInterface
@@ -26,11 +30,6 @@ class User implements AdvancedUserInterface
      * @ORM\Column(type="string", length=180, unique=true)
      */
     private $username;
-
-    /**
-     * @ORM\Column(type="json")
-     */
-    private $roles = [];
 
     /**
      * @var string The hashed password
@@ -68,6 +67,7 @@ class User implements AdvancedUserInterface
     {
         $this->depot = new ArrayCollection();
         $this->compte = new ArrayCollection();
+        $this->isActive= true;
     }
 
     public function getId(): ?int
@@ -97,19 +97,13 @@ class User implements AdvancedUserInterface
      */
     public function getRoles(): array
     {
-        $roles = $this->roles;
+        $roles[] = $this->profil->getLibelle();
         // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
 
         return array_unique($roles);
     }
 
-    public function setRoles(array $roles): self
-    {
-        $this->roles = $roles;
-
-        return $this;
-    }
 
     /**
      * @see UserInterface

@@ -2,15 +2,26 @@
 
 namespace App\Entity;
 
+use App\Entity\User;
+use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Security\Voter\CompteVoter;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
+
 
 /**
  * @ApiResource()
  * @ORM\Entity(repositoryClass="App\Repository\CompteRepository")
+ * denormalizationContext={"groups"={"post"}},
+ * collectionOperations={"get"={"normalization_context"={"groups"={"get"}},},
+ * "post"={"security"="is_granted(['ROLE_ADMIN_SYSTEM','ROLE_ADMIN'])", 
+ * "security_message"="Seul ADMIN_SYSTEM peut creer un user","controller"=CompteVoter::class ,}},
+ * itemOperations={"get"={"security"="is_granted('ROLE_ADMIN_SYSTEM')"},
+ * "put"={"security"="is_granted(['ROLE_ADMIN_SYSTEM','ROLE_ADMIN'])",
+ * "security_message"="Seul ADMIN_SYST peut bloquer un user"}} )
  */
+ 
 class Compte
 {
     /**
@@ -21,43 +32,48 @@ class Compte
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string")
      */
     private $numero_compte;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="datetime")
      */
     private $date_creation;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="integer")
      */
     private $solde;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $partenaire;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Depot", mappedBy="no")
+     * @ORM\OneToMany(targetEntity="App\Entity\Depot", mappedBy="compte")
      */
     private $depot;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="compte")
+     * @ORM\JoinColumn(nullable=false)
      */
     private $user;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Partenaire", inversedBy="compte")
+     * @ORM\JoinColumn(nullable=false)
      */
-    private $no;
+    private $partenaire;
+
+    /** 
+     * @ORM\Column(type="string", length=255)   
+     */
+    private $statut;
 
     public function __construct()
     {
+        $this->statut = "actif";
         $this->depot = new ArrayCollection();
+        $this->user = new ArrayCollection();
+
     }
 
     public function getId(): ?int
@@ -77,12 +93,12 @@ class Compte
         return $this;
     }
 
-    public function getDateCreation(): ?string
+    public function getDateCreation(): ?\DateTimeInterface
     {
         return $this->date_creation;
     }
 
-    public function setDateCreation(string $date_creation): self
+    public function setDateCreation(\DateTimeInterface $date_creation): self
     {
         $this->date_creation = $date_creation;
 
@@ -113,7 +129,7 @@ class Compte
     {
         if (!$this->depot->contains($depot)) {
             $this->depot[] = $depot;
-            $depot->setNo($this);
+            $depot->setCompte($this);
         }
 
         return $this;
@@ -124,10 +140,23 @@ class Compte
         if ($this->depot->contains($depot)) {
             $this->depot->removeElement($depot);
             // set the owning side to null (unless already changed)
-            if ($depot->getNo() === $this) {
-                $depot->setNo(null);
+            if ($depot->getCompte() === $this) 
+            {
+                $depot->setCompte(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getStatut(): ?string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(string $statut): self
+    {
+        $this->statut = $statut;
 
         return $this;
     }
@@ -144,14 +173,14 @@ class Compte
         return $this;
     }
 
-    public function getNo(): ?Partenaire
+    public function getPartenaire(): ?Partenaire
     {
-        return $this->no;
+        return $this->partenaire;
     }
 
-    public function setNo(?Partenaire $no): self
+    public function setPartenaire(?Partenaire $partenaire): self
     {
-        $this->no = $no;
+        $this->partenaire = $partenaire;
 
         return $this;
     }

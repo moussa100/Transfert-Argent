@@ -26,15 +26,15 @@ class CompteController extends AbstractController
         $this->tokenStorage = $tokenStorage;
     }
       /** 
-     * @Route("/newcomptep", name="creation_compte_NewPartenaire", methods={"POST"})
+     * @Route("/newpartner", name="creation_compte_NewPartner", methods={"POST"})
      * 
      */
-    public function compteNew_Partenaire(Request $request, EntityManagerInterface $entityManager, UserPasswordEncoderInterface $userPasswordEncoder)
+    public function compteNew_Partner(Request $request, EntityManagerInterface $entityManager, UserPasswordEncoderInterface $userPasswordEncoder)
     {
     //     $a = $this->denyAccessUnlessGranted('POST', $this->getUser());
     //    // dd($a);
         $values = json_decode($request->getContent());
-        if(isset($values->email,$values->password,$values->ninea,$values->montant))
+        if(isset($values->password,$values->ninea,$values->montant))
         {
             $dateCreation = new \DateTime();
             $depot = new Depot();
@@ -43,19 +43,18 @@ class CompteController extends AbstractController
             $partenaire = new Partenaire();                                                             
             // AFFECTATION DES VALEURS AUX DIFFERENTS TABLE
                     #####   USER    ######
-            $roleRepo = $this->getDoctrine()->getRepository(Role::class);
-            $role = $roleRepo->find($values->role);
-            $user->setNom($values->nom);
-            $user->setPrenom($values->prenom);
-            $user->setEmail($values->email);
+            $roleRepo = $this->getDoctrine()->getRepository(Profil::class);
+            $role = $roleRepo->find($values->profil);
+            $user->setUsername($values->username);
             $user->setPassword($userPasswordEncoder->encodePassword($user, $values->password));
-            $user->setRole($role);
+            $user->setProfil($role);
+            
             
             $entityManager->persist($user);
             $entityManager->flush();
 
             $partenaire->setNinea($values->ninea);
-            $partenaire->setRC($values->rC);
+            $partenaire->setRegistreCommerce($values->registreCommerce);
             // $partenaire->setDateContrat($dateJours);
             // $partenaire->setUsers($user);
 
@@ -67,12 +66,12 @@ class CompteController extends AbstractController
             $cpt = $this->getLastCompte();
             $long = strlen($cpt);
             $ninea2 = substr($partenaire->getNinea() , -2);
-            $NumCompte = str_pad("KH".$annee.$ninea2, 11-$long, "0").$cpt;
+            $NumCompte = str_pad("MS".$annee.$ninea2, 11-$long, "0").$cpt;
                     #####   COMPTE    ######
             // recuperer de l'utilisateur qui cree le compte et y effectue un depot initial
             $userCreateur = $this->tokenStorage->getToken()->getUser();
-            $compte->setNumCompte($NumCompte);
-            $compte->setMontant(0);
+            $compte->setNumeroCompte($NumCompte);
+            $compte->setSolde(0);
             $compte->setDateCreation($dateCreation);
             $compte->setUser($user);
             $compte->setPartenaire($partenaire);  
@@ -101,7 +100,7 @@ class CompteController extends AbstractController
         }
         $data = [
             'status' => 500,
-            'message' => 'Vous devez renseigner un login et un passwordet un ninea pour le partenaire, le numero de compte ainsi que le montant a deposer'
+            'message' => 'Vous devez renseigner un login et un password un ninea pour le partenaire, le numero de compte ainsi que le montant a deposer'
         ];
         return new JsonResponse($data, 500);
     }

@@ -2,11 +2,16 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiResource;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Core\Annotation\ApiResource;
 
 /**
- * @ApiResource()
+ * @ApiResource(
+ * collectionOperations={
+ *"post"={"access_control"="is_granted('POST', object)"}
+ * },
+ * )
  * @ORM\Entity(repositoryClass="App\Repository\DepotRepository")
  */
 class Depot
@@ -19,7 +24,7 @@ class Depot
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="datatime")
      */
     private $date_depot;
 
@@ -30,25 +35,27 @@ class Depot
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Compte", inversedBy="depot")
+     * @ORM\JoinColumn(nullable=false)
      */
-    private $no;
+    private $compte;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="depot")
+     * @ORM\JoinColumn(nullable=false)
      */
-    private $user;
+    private $caissierAdd;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getDateDepot(): ?string
+    public function getDateDepot(): ?\DateTimeInterface
     {
         return $this->date_depot;
     }
 
-    public function setDateDepot(string $date_depot): self
+    public function setDateDepot(\DateTimeInterface $date_depot): self
     {
         $this->date_depot = $date_depot;
 
@@ -67,26 +74,26 @@ class Depot
         return $this;
     }
 
-    public function getNo(): ?Compte
+    public function getCompte(): ?Compte
     {
-        return $this->no;
+        return $this->compte;
     }
 
-    public function setNo(?Compte $no): self
+    public function setCompte(?Compte $compte): self
     {
-        $this->no = $no;
+        $this->compte = $compte;
 
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getCaissierAdd(): ?User
     {
-        return $this->user;
+        return $this->caissierAdd;
     }
 
-    public function setUser(?User $user): self
+    public function setCaissierAdd(?User $caissierAdd): self
     {
-        $this->user = $user;
+        $this->caissierAdd = $caissierAdd;
 
         return $this;
     }
